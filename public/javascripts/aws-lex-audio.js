@@ -709,6 +709,8 @@ module.exports = function (self) {
     var encodedWav = encodeWAV(downsampledBuffer);
     var audioBlob = new Blob([encodedWav], {type: 'application/octet-stream'});
     postMessage(audioBlob);
+    console.log('myblob',audioBlob);
+
   }
 
   function clear() {
