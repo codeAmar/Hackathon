@@ -4,37 +4,10 @@
   var rec = require('./recorder.js');
   var recorder, audioRecorder, checkAudioSupport, audioSupported, playbackSource, UNSUPPORTED = 'Audio is not supported.';
 
-  /**
-   * Represents an audio control that can start and stop recording,
-   * export captured audio, play an audio buffer, and check if audio
-   * is supported.
-   */
   exports.audioControl = function (options) {
     options = options || {};
     this.checkAudioSupport = options.checkAudioSupport !== false;
     
-    /**
-     * This callback type is called `onSilenceCallback`.
-     *
-     * @callback onSilenceCallback
-     */
-
-    /**
-     * Visualize callback: `visualizerCallback`.
-     *
-     * @callback visualizerCallback
-     * @param {Uint8Array} dataArray
-     * @param {number} bufferLength
-     */
-
-    /**
-     * Clears the previous buffer and starts buffering audio.
-     *
-     * @param {?onSilenceCallback} onSilence - Called when silence is detected.
-     * @param {?visualizerCallback} visualizer - Can be used to visualize the captured buffer.
-     * @param {silenceDetectionConfig} - Specify custom silence detection values.
-     * @throws {Error} If audio is not supported.
-     */
     var startRecording = function (onSilence, visualizer, silenceDetectionConfig) {
       onSilence = onSilence || function () { /* no op */
         };
@@ -47,12 +20,6 @@
       recorder = audioRecorder.createRecorder(silenceDetectionConfig);
       recorder.record(onSilence, visualizer);
     };
-
-    /**
-     * Stops buffering audio.
-     *
-     * @throws {Error} If audio is not supported.
-     */
     var stopRecording = function () {
       audioSupported = audioSupported !== false;
       if (!audioSupported) {
@@ -61,20 +28,6 @@
       recorder.stop();
     };
 
-    /**
-     * On export complete callback: `onExportComplete`.
-     *
-     * @callback onExportComplete
-     * @param {Blob} blob The exported audio as a Blob.
-     */
-
-    /**
-     * Exports the captured audio buffer.
-     *
-     * @param {onExportComplete} callback - Called when the export is complete.
-     * @param {sampleRate} The sample rate to use in the export.
-     * @throws {Error} If audio is not supported.
-     */
     var exportWAV = function (callback, sampleRate) {
       audioSupported = audioSupported !== false;
       if (!audioSupported) {
@@ -87,17 +40,6 @@
       recorder.exportWAV(callback, sampleRate);
     };
 
-    /**
-     * On playback complete callback: `onPlaybackComplete`.
-     *
-     * @callback onPlaybackComplete
-     */
-
-    /**
-     * Plays the audio buffer with an HTML5 audio tag.
-     * @param {Uint8Array} buffer - The audio buffer to play.
-     * @param {?onPlaybackComplete} callback - Called when audio playback is complete.
-     */
     var playHtmlAudioElement = function (buffer, callback) {
       if (typeof buffer === 'undefined') {
         return;
@@ -116,39 +58,22 @@
       recorder.clear();
     };
 
-    /**
-     * On playback complete callback: `onPlaybackComplete`.
-     *
-     * @callback onPlaybackComplete
-     */
-
-    /**
-     * Plays the audio buffer with a WebAudio AudioBufferSourceNode. 
-     * @param {Uint8Array} buffer - The audio buffer to play.
-     * @param {?onPlaybackComplete} callback - Called when audio playback is complete.
-     */
     var play = function (buffer, callback) {
       if (typeof buffer === 'undefined') {
         return;
       }
       var myBlob = new Blob([buffer]);
-      // We'll use a FileReader to create and ArrayBuffer out of the audio response.
       var fileReader = new FileReader();
       fileReader.onload = function() {
-        // Once we have an ArrayBuffer we can create our BufferSource and decode the result as an AudioBuffer.
         playbackSource = audioRecorder.audioContext().createBufferSource();
         audioRecorder.audioContext().decodeAudioData(this.result, function(buf) {
-          // Set the source buffer as our new AudioBuffer.
           playbackSource.buffer = buf;
-          // Set the destination (the actual audio-rendering device--your device's speakers).
           playbackSource.connect(audioRecorder.audioContext().destination);
-          // Add an "on ended" callback.
           playbackSource.onended = function(event) {
             if (typeof callback === 'function') {
               callback();
             }
           };
-          // Start the playback.
           playbackSource.start(0);
         });
         recorder.clear();
@@ -156,10 +81,6 @@
       fileReader.readAsArrayBuffer(myBlob);
     };
 
-    /**
-     * Stops the playback source (created by the play method) if it exists. The `onPlaybackComplete`
-     * callback will be called.
-     */
     var stop = function() {
       if (typeof playbackSource === 'undefined') {
         return;
@@ -167,24 +88,10 @@
       playbackSource.stop();
     };
 
-    /**
-     * Clear the recording buffer.
-     */
     var clear = function () {
       recorder.clear();
     };
 
-    /**
-     * On audio supported callback: `onAudioSupported`.
-     *
-     * @callback onAudioSupported
-     * @param {boolean}
-     */
-
-    /**
-     * Checks that getUserMedia is supported and the user has given us access to the mic.
-     * @param {onAudioSupported} callback - Called with the result.
-     */
     var supportsAudio = function (callback) {
       callback = callback || function () { /* no op */
         };
@@ -242,7 +149,6 @@
   exports.conversation = function(config, onStateChange, onSuccess, onError, onAudioData) {
     var currentState;
 
-    // Apply default values.
     this.config = applyDefaults(config);
     this.lexConfig = this.config.lexConfig;
     this.messages = MESSAGES;
@@ -251,7 +157,6 @@
     this.onError = onError || function() { /* no op */ };
     this.onAudioData = onAudioData || function() { /* no op */ };
 
-    // Validate input.
     if (!this.config.lexConfig.botName) {
       this.onError('A Bot name must be provided.');
       return;
@@ -279,13 +184,9 @@
       var state = currentState.state;
       onStateChange(state.message);
 
-      // If we are transitioning into SENDING or SPEAKING we want to immediately advance the conversation state
-      // to start the service call or playback.
       if (state.message === state.messages.SENDING || state.message === state.messages.SPEAKING) {
         currentState.advanceConversation();
       }
-      // If we are transitioning in to sending and we are not detecting silence (this was a manual state change)
-      // we need to do some cleanup: stop recording, and stop rendering.
       if (state.message === state.messages.SENDING && !this.config.silenceDetection) {
         audioControl.stopRecording();
       }
@@ -398,10 +299,6 @@
 })();
 },{"./control.js":1}],3:[function(require,module,exports){
 (function (global){
-/**
- * @module LexAudio
- * @description The global namespace for Amazon Lex Audio
- */
 global.LexAudio = global.LexAudio || {};
 global.LexAudio.audioControl = require('./control.js').audioControl;
 global.LexAudio.conversation = require('./conversation.js').conversation;
@@ -421,10 +318,6 @@ module.exports = function (fn, options) {
     for (var i = 0, l = cacheKeys.length; i < l; i++) {
         var key = cacheKeys[i];
         var exp = cache[key].exports;
-        // Using babel as a transpiler to use esmodule, the export will always
-        // be an object with the default export as a property of it. To ensure
-        // the existing api and babel esmodule exports are both supported we
-        // check for both
         if (exp === fn || exp && exp.default === fn) {
             wkey = key;
             break;
@@ -448,8 +341,6 @@ module.exports = function (fn, options) {
     var scache = {}; scache[wkey] = wkey;
     sources[skey] = [
         Function(['require'], (
-            // try to call default if defined to also support babel esmodule
-            // exports
             'var f = require(' + stringify(wkey) + ');' +
             '(f.default ? f.default : f)(self);'
         )),
@@ -496,11 +387,6 @@ module.exports = function (fn, options) {
   var work = require('webworkify');
   var worker = work(require('./worker.js'));
   var audio_context, audio_stream;
-
-  /**
-   * The Recorder object. Sets up the onaudioprocess callback and communicates
-   * with the web worker to perform audio actions.
-   */
   var recorder = function (source, silenceDetectionConfig) {
 
     silenceDetectionConfig = silenceDetectionConfig || {};
@@ -510,7 +396,6 @@ module.exports = function (fn, options) {
     var recording = false,
       currCallback, start, silenceCallback, visualizationCallback;
 
-    // Create a ScriptProcessorNode with a bufferSize of 4096 and a single input and output channel
     var node = source.context.createScriptProcessor(4096, 1, 1);
 
     worker.onmessage = function (message) {
@@ -525,38 +410,20 @@ module.exports = function (fn, options) {
       }
     });
 
-    /**
-     * Sets the silence and viz callbacks, resets the silence start time, and sets recording to true.
-     * @param {?onSilenceCallback} onSilence - Called when silence is detected.
-     * @param {?visualizerCallback} visualizer - Can be used to visualize the captured buffer.
-     */
     var record = function (onSilence, visualizer) {
       silenceCallback = onSilence;
       visualizationCallback = visualizer;
       start = Date.now();
       recording = true;
     };
-
-    /**
-     * Sets recording to false.
-     */
     var stop = function () {
       recording = false;
     };
-
-    /**
-     * Posts "clear" message to the worker.
-     */
     var clear = function () {
       stop();
       worker.postMessage({command: 'clear'});
     };
 
-    /**
-     * Sets the export callback and posts an "export" message to the worker.
-     * @param {onExportComplete} callback - Called when the export is complete.
-     * @param {sampleRate} The sample rate to use in the export.
-     */
     var exportWAV = function (callback, sampleRate) {
       currCallback = callback;
       worker.postMessage({
@@ -565,12 +432,6 @@ module.exports = function (fn, options) {
       });
     };
 
-    /**
-     * Checks the time domain data to see if the amplitude of the audio waveform is more than
-     * the silence threshold. If it is, "noise" has been detected and it resets the start time.
-     * If the elapsed time reaches the time threshold the silence callback is called. If there is a 
-     * visualizationCallback it invokes the visualization callback with the time domain data.
-     */
     var analyse = function () {
       analyser.fftSize = 2048;
       var bufferLength = analyser.fftSize;
@@ -598,11 +459,6 @@ module.exports = function (fn, options) {
       }
     };
 
-    /**
-     * The onaudioprocess event handler of the ScriptProcessorNode interface. It is the EventHandler to be
-     * called for the audioprocess event that is dispatched to ScriptProcessorNode node types.
-     * @param {AudioProcessingEvent} audioProcessingEvent - The audio processing event.
-     */
     node.onaudioprocess = function (audioProcessingEvent) {
       if (!recording) {
         return;
@@ -633,15 +489,7 @@ module.exports = function (fn, options) {
     };
   };
 
-  /**
-   * Audio recorder object. Handles setting up the audio context,
-   * accessing the mike, and creating the Recorder object.
-   */
   exports.audioRecorder = function () {
-
-    /**
-     * Creates an audio context and calls getUserMedia to request the mic (audio).
-     */
     var requestDevice = function () {
 
       if (typeof audio_context === 'undefined') {
