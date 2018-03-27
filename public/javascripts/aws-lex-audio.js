@@ -391,6 +391,7 @@
         state.message = state.messages.SPEAKING;
         this.advanceConversation = function () {
           if (state.audioOutput.contentType === 'audio/mpeg') {
+            state.upload(state.audioOutput.audioStream);
             audioControl.play(state.audioOutput.audioStream, function () {
               if (state.audioOutput.dialogState === 'ReadyForFulfillment' ||
                 state.audioOutput.dialogState === 'Fulfilled' ||
