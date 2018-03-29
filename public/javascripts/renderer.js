@@ -1,52 +1,66 @@
-(function() {
-  'use strict';
-  var canvas = document.querySelector('.visualizer');
-  var canvasCtx = canvas.getContext('2d');
-  var listening = true;
-
-  /**
-   * Will render an audio buffer as wave form. Right now, it expects 
-   * a canvas element to be on the page with class name "visualizer".
-   */
-  window.Waveform = function() {
-    /**
-     * Clears the canvas element.
-     */
-    var clearCanvas = function() {
-      canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-      listening = false;
-    };
+(function () {
+    'use strict';
+    var canvas = document.querySelector('.visualizer');
+    var canvasCtx = canvas.getContext('2d');
+    var listening = true;
 
     /**
-     * Sets the listening flag to true.
+     * Will render an audio buffer as wave form. Right now, it expects 
+     * a canvas element to be on the page with class name "visualizer".
      */
-    var prepCanvas = function() {
-      listening = true;
-    };
-
-    /**
-     * Clears the canvas and draws the dataArray. 
-     * @param {Uint8Array} dataArray - The time domain audio data to visualize.
-     * @param {number} bufferLength - The FFT length.
-     */
-    var visualizeAudioBuffer = function(dataArray, bufferLength) {
-      var WIDTH = canvas.width;
-      var HEIGHT = canvas.height;
-      var animationId;
-      canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    window.Waveform = function () {
+      /**
+       * Clears the canvas element.
+       */
+      var clearCanvas = function () {
+        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        listening = false;
+      };
 
       /**
-       * Will be called at about 60 times per second. If listening, draw the dataArray. 
+       * Sets the listening flag to true.
        */
-      function draw() {
-        if (!listening) {
-          return;
-        }
+      var prepCanvas = function () {
+        listening = true;
+      };
 
-        canvasCtx.fillStyle = 'rgb(249,250,252)';
+      /**
+       * Clears the canvas and draws the dataArray. 
+       * @param {Uint8Array} dataArray - The time domain audio data to visualize.
+       * @param {number} bufferLength - The FFT length.
+       */
+      var visualizeAudioBuffer = function (dataArray, bufferLength) {
+        var WIDTH = canvas.width;
+        var HEIGHT = canvas.height;
+        var animationId;
+        canvasCtx.clearRect(0, 0, WIDTH, HEIGHT);
+
+        /**
+         * Will be called at about 60 times per second. If listening, draw the dataArray. 
+         */
+        function draw() {
+          if (!listening) {
+            return;
+          }
+
+          // canvasCtx.fillStyle = 'rgb(255, 255, 255)';
+          // canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+          // var barWidth = (WIDTH / bufferLength) * 2.5;
+          // var barHeight;
+          // var x = 0;
+          // for (var i = 0; i < bufferLength; i++) {
+          //   barHeight = dataArray[i] / 2;
+
+          //   canvasCtx.fillStyle = 'rgb(' + (barHeight + 180) + ',0,0)';
+          //   canvasCtx.fillRect(x, HEIGHT - barHeight / 2, barWidth, barHeight);
+
+          //   x += barWidth + 1;
+          // }
+        
+        canvasCtx.fillStyle = 'rgb(254,250,254)';
         canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-        canvasCtx.lineWidth = 1;
-        canvasCtx.strokeStyle = 'rgb(0,125,188)';
+        canvasCtx.lineWidth = .75;
+        canvasCtx.strokeStyle = 'rgb(0,0,0)';
         canvasCtx.beginPath();
 
         var sliceWidth = WIDTH * 1.0 / bufferLength;
